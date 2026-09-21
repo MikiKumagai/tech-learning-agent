@@ -7,7 +7,7 @@ load_dotenv()
 
 root_agent = Agent(
     name="tech_learning_agent",
-    model="gemini-2.5-flash",
+    model="gemini-3.8-flash",
     description="技術学習を支援するAIエージェント",
     instruction="""
     あなたは技術学習を支援するAIエージェントです。
