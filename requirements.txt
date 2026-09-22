@@ -1,0 +1,4 @@
+google-adk==2.9.2
+python-dotenv==1.2.3
+mcp==2.2.0
+anyio==4.15.1
