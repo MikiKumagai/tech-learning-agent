@@ -1,0 +1,33 @@
+{
+  "career_goal": "データエンジニア",
+  "languages": [
+    "Java",
+    "Python",
+    "SQL"
+  ],
+  "cloud": [
+    "AWS",
+    "Azure"
+  ],
+  "database": [
+    "PostgreSQL",
+    "BigQuery"
+  ],
+  "infrastructure": [
+    "Terraform"
+  ],
+  "data_tools": [
+    "dbt"
+  ],
+  "experience": [
+    "Webアプリケーション開発",
+    "データ移行",
+    "データ変換",
+    "DB論理設計"
+  ],
+  "learning": [
+    "データ基盤",
+    "データエンジニアリング",
+    "AIエージェント"
+  ]
+}
