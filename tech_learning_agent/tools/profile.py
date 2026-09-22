@@ -1,12 +1,10 @@
 import json
-from pathlib import Path
+from typing import Any
+
+from ..config import PROFILE_PATH
 
 
-def get_skill_profile() -> dict:
-    """
-    ユーザーのスキル・経験・学習目標を取得するTool。
-    """
-    profile_path = Path(__file__).resolve().parents[2] / "data" / "profile.json"
-
-    with profile_path.open(encoding="utf-8") as f:
-        return json.load(f)
+def get_skill_profile() -> dict[str, Any]:
+    """ユーザーのスキル・経験・学習目標をファイルから取得する。"""
+    with PROFILE_PATH.open(encoding="utf-8") as profile_file:
+        return json.load(profile_file)
