@@ -1,4 +1,4 @@
-"""GitHub リポジトリ取得ツールの動作確認用クライアント。"""
+"""MikiKumagai の全公開リポジトリ取得を確認するクライアント。"""
 
 import sys
 from pathlib import Path
@@ -14,10 +14,9 @@ async def main() -> None:
     )
     async with Client(server) as client:
         result = await client.call_tool(
-            "get_github_repo",
+            "list_github_repos",
             {
                 "owner": "MikiKumagai",
-                "repo": "progress_management",
             },
         )
         print(result)
