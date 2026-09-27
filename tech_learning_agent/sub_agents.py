@@ -3,12 +3,15 @@
 from google.adk.agents import Agent
 from google.adk.tools import google_search
 
-from .config import MODEL_NAME
+from .config import MODEL
+from .tools.mcp import create_mcp_toolset
 from .tools.profile import get_skill_profile
+
+mcp_toolset = create_mcp_toolset()
 
 trend_researcher = Agent(
     name="trend_researcher",
-    model=MODEL_NAME,
+    model=MODEL,
     description="最新の技術トレンドを調査する",
     instruction="""
     最新の技術トレンドを調査してください。
@@ -20,12 +23,20 @@ trend_researcher = Agent(
 
 technology_evaluator = Agent(
     name="technology_evaluator",
-    model=MODEL_NAME,
+    model=MODEL,
     description="技術候補をユーザーのスキルや目的に照らして評価するサブエージェント",
     instruction="""
     あなたは技術評価を担当するサブエージェントです。
 
     まず get_skill_profile を使ってユーザーの現在のスキルを確認してください。
+
+    次に list_github_repos を owner="MikiKumagai" で呼び出し、
+    MikiKumagai が所有する全公開リポジトリを確認してください。
+    特定のリポジトリだけに限定せず、取得した一覧全体からスキルや技術候補に関連するリポジトリを探してください。
+
+    必要に応じて get_github_repo を使って、技術候補に関連する GitHub の公開リポジトリ情報を確認してください。
+    取得した情報は技術候補の評価に活用し、ユーザーのスキルや目的との関係を分かりやすく説明してください。
+    リポジトリ情報にはコード本文は含まれないため、実装内容や習熟度を確認したものとして断定しないでください。
 
     その上で、渡された技術候補について、
 
@@ -39,12 +50,12 @@ technology_evaluator = Agent(
 
     判断理由も説明してください。
     """,
-    tools=[get_skill_profile],
+    tools=[get_skill_profile, mcp_toolset],
 )
 
 learning_planner = Agent(
     name="learning_planner",
-    model=MODEL_NAME,
+    model=MODEL,
     description="学習する技術の順番と学習計画を作成するサブエージェント",
     instruction="""
     あなたは学習計画の作成を担当するサブエージェントです。
@@ -65,5 +76,24 @@ learning_planner = Agent(
 
     単に技術を並べるのではなく、
     「なぜこの順番なのか」が分かる学習計画にしてください。
+
+    さらに、学習内容を実践する場所についても検討してください。
+
+    GitHub上の既存リポジトリを確認した結果が渡されている場合は、
+    学習テーマとの関連性を考慮し、
+
+    - 既存リポジトリに組み込む
+    - 既存リポジトリとは分けて新しいリポジトリを作る
+
+    のどちらが適切か判断してください。
+
+    既存リポジトリに組み込む場合は、
+    どのリポジトリに、どのような形で追加するかを具体的に提案してください。
+
+    新しいリポジトリを作る場合は、
+    その理由と、どのような構成にすると学習しやすいかを提案してください。
+
+    単にリポジトリを増やすことを目的にせず、
+    既存プロジェクトとの関連性や、学習内容を独立して試す必要性を考慮してください。
     """,
 )

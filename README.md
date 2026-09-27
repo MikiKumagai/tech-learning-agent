@@ -9,12 +9,12 @@ Google の Agent Development Kit（ADK）を使った、技術学習を支援す
 | エージェント | 役割 | 使用するツール |
 | --- | --- | --- |
 | `trend_researcher` | 公式情報を優先して最新の技術トレンドを調査 | `google_search` |
-| `technology_evaluator` | 現在のスキル、データエンジニアとの関連性、実務での活用、前提知識、学習コストを評価 | `get_skill_profile` |
+| `technology_evaluator` | 現在のスキル、公開リポジトリ、実務での活用、前提知識、学習コストをもとに技術候補を評価 | `get_skill_profile`、`list_github_repos`・`get_github_repo`（MCP） |
 | `learning_planner` | 学習順序と理由、実践内容、次の技術へ進む条件を含む学習計画を作成 | なし |
 
 メインエージェントには「調査 → 評価 → 学習計画 → 結果の整理」の順で対応するよう指示しています。処理の引き継ぎは LLM の判断に依存するため、固定順序の実行を保証する構成ではありません。
 
-メインエージェントは MCP 経由の `get_github_repo` も利用し、技術候補に関連する GitHub の公開リポジトリ情報を取得できます。
+技術評価エージェント `technology_evaluator` は MCP 経由の `list_github_repos` で `MikiKumagai` が所有する全公開リポジトリを取得し、評価対象を探します。必要に応じて `get_github_repo` で個別の公開リポジトリ情報も取得します。
 
 ## 必要なもの
 
@@ -69,7 +69,14 @@ adk web
 ```text
 データエンジニアを目指しています。最近の技術トレンドを調べ、
 現在のスキルに合う技術を評価して、学習する順番と実践課題を提案してください。
+MikiKumagai の全公開リポジトリも参考にしてください。
 ```
+
+## GitHub の公開リポジトリを取得する
+
+`list_github_repos(owner="MikiKumagai")` は、指定ユーザーが所有する公開リポジトリを、フォーク・アーカイブ済みも含めて取得します。[GitHub のユーザー別リポジトリ API](https://docs.github.com/en/rest/repos/repos#list-repositories-for-a-user) を100件ずつ呼び出し、最後のページまで取得します。
+
+返す情報は、名前・説明・主な言語・スター数・フォーク数・URL です。この一覧全体を評価エージェントが参照します。README やソースコード本文の取得・全文検索は行いません。
 
 ## スキル・学習目標の設定
 
@@ -97,8 +104,7 @@ tech-learning-agent/
 ├── data/
 │   └── profile.json          # スキル・経験・学習目標
 ├── mcp_server/
-│   ├── server.py             # GitHub リポジトリ情報を返す MCP サーバー
-│   └── client.py             # MCP ツールの呼び出し確認
+│   └── server.py             # GitHub リポジトリ情報を返す MCP サーバー
 └── tech_learning_agent/
     ├── __init__.py
     ├── agent.py              # ADK が読み込むメインエージェント
