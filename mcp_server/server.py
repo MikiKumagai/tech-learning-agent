@@ -11,7 +11,7 @@ mcp = MCPServer("tech-learning-server")
 
 
 def _request_github(url: str) -> Any:
-    """GitHub API の JSON を取得する。失敗時はエラーを呼び出し元へ返す。"""
+    """GitHub API の JSON を取得する。"""
     request = urllib.request.Request(
         url,
         headers={
@@ -20,6 +20,7 @@ def _request_github(url: str) -> Any:
         },
     )
 
+    # GitHub APIにHTTPリクエストを送る
     with urllib.request.urlopen(request, timeout=15) as response:
         return json.load(response)
 
@@ -38,7 +39,7 @@ def _summarize_repo(data: dict[str, Any]) -> dict[str, Any]:
 
 @mcp.tool()
 def get_github_repo(owner: str, repo: str) -> dict[str, Any]:
-    """GitHub の指定した公開リポジトリ情報を取得する。"""
+    """MCP Tool1: GitHub の指定した公開リポジトリ情報を取得する。"""
     owner = urllib.parse.quote(owner, safe="")
     repo = urllib.parse.quote(repo, safe="")
     return _summarize_repo(_request_github(f"https://api.github.com/repos/{owner}/{repo}"))
@@ -46,11 +47,7 @@ def get_github_repo(owner: str, repo: str) -> dict[str, Any]:
 
 @mcp.tool()
 def list_github_repos(owner: str = "MikiKumagai") -> list[dict[str, Any]]:
-    """指定ユーザーが所有する公開リポジトリを全件取得する。
-
-    既定の対象は MikiKumagai。フォーク・アーカイブ済みも含めて全ページを取得する。
-    返すのは名前・説明・主な言語・スター数・フォーク数・URL で、コード本文は含まない。
-    """
+    """MCP Tool2: 指定ユーザーが所有する公開リポジトリを全件取得する。"""
     owner = urllib.parse.quote(owner, safe="")
     repositories = []
     page = 1
