@@ -1,116 +1,99 @@
 # tech-learning-agent
 
-Google の Agent Development Kit（ADK）を使った、技術学習を支援する AI エージェントです。Gemini と Google 検索を使い、技術トレンドの調査、ユーザーのスキルに応じた技術候補の評価、学習計画の作成を行います。
+技術トレンドの調査から、自分に合った学習テーマの選定、学習計画の作成までを支援するAIエージェント。
 
-## エージェント構成
+Google ADKとGeminiを使って、複数のサブエージェントが役割分担して技術学習を支援する。
 
-メインエージェント `tech_learning_agent` に、次の3つのサブエージェントを登録しています。
+## 概要
 
-| エージェント | 役割 | 使用するツール |
-| --- | --- | --- |
-| `trend_researcher` | 公式情報を優先して最新の技術トレンドを調査 | `google_search` |
-| `technology_evaluator` | 現在のスキル、公開リポジトリ、実務での活用、前提知識、学習コストをもとに技術候補を評価 | `get_skill_profile`、`list_github_repos`・`get_github_repo`（MCP） |
-| `learning_planner` | 学習順序と理由、実践内容、次の技術へ進む条件を含む学習計画を作成 | なし |
+技術を学ぶときの、
 
-メインエージェントには「調査 → 評価 → 学習計画 → 結果の整理」の順で対応するよう指示しています。処理の引き継ぎは LLM の判断に依存するため、固定順序の実行を保証する構成ではありません。
+* 最近どんな技術が注目されているか
+* 自分のスキルとどう関係するか
+* 何から学ぶべきか
 
-技術評価エージェント `technology_evaluator` は MCP 経由の `list_github_repos` で `MikiKumagai` が所有する全公開リポジトリを取得し、評価対象を探します。必要に応じて `get_github_repo` で個別の公開リポジトリ情報も取得します。
-
-## 必要なもの
-
-- Python 3.10 以上
-- Gemini API キー（[Google AI Studio](https://aistudio.google.com/apikey) で取得）
-
-## セットアップ
-
-以下のコマンドは、プロジェクトのルートディレクトリ（この README がある場所）で実行します。シェルの例は macOS / Linux 向けです。
-
-### 1. 仮想環境を作成・有効化する
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 2. 依存パッケージをインストールする
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-`requirements.txt` にローカルで確認した依存パッケージのバージョンをまとめています。`mcp` と `anyio` は、後述の MCP クライアントでも使用します。
-
-`google-adk==2.9.2` などのパッケージ名とバージョンは `requirements.txt` に記載します。`.env` には、次の手順の API キーなどの環境変数を設定します。
-
-### 3. API キーを設定する
-
-プロジェクトのルートに `.env` を作成し、次の内容を設定します。すでにある場合は内容を確認してください。
-
-```dotenv
-GOOGLE_API_KEY=取得したAPIキー
-```
-
-`adk web` / `adk run` の起動時に、ADK が `.env` を読み込みます。現在の `agent.py` 自体には `.env` の読み込み処理はありません。`.env` は `.gitignore` の対象です。API キーをソースコードや README に直接書かないでください。
-
-## ブラウザで使う（adk web）
-
-仮想環境を有効化し、プロジェクトのルートで起動します。
-
-```bash
-adk web
-```
-
-1. ブラウザで <http://localhost:8000> を開きます。
-2. エージェントの選択欄で `tech_learning_agent` を選びます。
-3. チャット欄に質問を入力します。
-
-質問例：
+を調べて判断する作業をAIで支援する。
 
 ```text
-データエンジニアを目指しています。最近の技術トレンドを調べ、
-現在のスキルに合う技術を評価して、学習する順番と実践課題を提案してください。
-MikiKumagai の全公開リポジトリも参考にしてください。
+ユーザー
+  ↓
+tech_learning_agent
+  ├─ trend_researcher
+  ├─ technology_evaluator
+  └─ learning_planner
 ```
 
-## GitHub の公開リポジトリを取得する
+### Agent
 
-`list_github_repos(owner="MikiKumagai")` は、指定ユーザーが所有する公開リポジトリを、フォーク・アーカイブ済みも含めて取得します。[GitHub のユーザー別リポジトリ API](https://docs.github.com/en/rest/repos/repos#list-repositories-for-a-user) を100件ずつ呼び出し、最後のページまで取得します。
+| Agent                  | 役割                  |
+| ---------------------- | ------------------- |
+| `trend_researcher`     | 最新の技術トレンドを調査        |
+| `technology_evaluator` | スキル・開発経験をもとに技術候補を評価 |
+| `learning_planner`     | 学習する順番と実践内容を作成      |
 
-返す情報は、名前・説明・主な言語・スター数・フォーク数・URL です。この一覧全体を評価エージェントが参照します。README やソースコード本文の取得・全文検索は行いません。
+## MCP
 
-## スキル・学習目標の設定
+GitHubの公開リポジトリ情報を取得するためにMCPを利用している。
 
-`data/profile.json` を編集して、自分の経験や目標を設定します。技術評価エージェントが `get_skill_profile` ツールを通じて、このファイルを読み込みます。
+```text
+technology_evaluator
+        ↓ MCP
+   MCP Server
+        ↓ HTTP
+   GitHub API
+```
 
-| キー | 内容 |
-| --- | --- |
-| `career_goal` | 目指す職種・キャリア目標（文字列） |
-| `languages` | 使用経験のあるプログラミング言語 |
-| `cloud` | 使用経験のあるクラウド |
-| `database` | 使用経験のあるデータベース |
-| `infrastructure` | インフラ関連のツール |
-| `data_tools` | データ関連のツール |
-| `experience` | 開発や業務の経験 |
-| `learning` | 学習中・学習したい分野 |
+MCP Serverでは以下のToolを提供している。
+
+* `list_github_repos`：公開リポジトリ一覧を取得
+* `get_github_repo`：指定したリポジトリの情報を取得
+
+GitHubの情報をAIから利用しやすい形にすることで、現在の開発経験も技術候補の評価に利用している。
 
 ## ディレクトリ構成
 
 ```text
 tech-learning-agent/
-├── README.md
-├── requirements.txt          # 依存パッケージ
-├── .gitignore
-├── .env                      # ローカルで作成する API キー設定
 ├── data/
-│   └── profile.json          # スキル・経験・学習目標
+│   └── profile.json
 ├── mcp_server/
-│   └── server.py             # GitHub リポジトリ情報を返す MCP サーバー
+│   └── server.py
 └── tech_learning_agent/
-    ├── __init__.py
-    ├── agent.py              # ADK が読み込むメインエージェント
-    ├── config.py             # 共通モデル名・ファイルパス
-    ├── sub_agents.py         # 調査・評価・学習計画のエージェント
+    ├── agent.py
+    ├── config.py
+    ├── sub_agents.py
     └── tools/
-        ├── mcp.py            # ADK 用 MCP ツールセットの生成
-        └── profile.py        # プロフィール取得ツール
+        ├── mcp.py
+        └── profile.py
 ```
+
+## Setup
+
+```bash
+git clone https://github.com/MikiKumagai/tech-learning-agent.git
+cd tech-learning-agent
+
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+`.env`にGemini API Keyを設定。
+
+```env
+GOOGLE_API_KEY=your-api-key
+```
+
+起動：
+
+```bash
+adk web
+```
+
+## 今後
+
+* 学習管理アプリとの連携
+* GitHub Wikiへの学習記録
+* 過去の学習内容を考慮した学習テーマの提案
+* MCP Toolの追加
+* Agentの処理フロー改善
