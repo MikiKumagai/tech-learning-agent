@@ -78,14 +78,6 @@ MikiKumagai の全公開リポジトリも参考にしてください。
 
 返す情報は、名前・説明・主な言語・スター数・フォーク数・URL です。この一覧全体を評価エージェントが参照します。README やソースコード本文の取得・全文検索は行いません。
 
-単独で取得結果を確認するには、仮想環境を有効化して次を実行します。
-
-```bash
-python mcp_server/client.py
-```
-
-クライアントが MCP サーバーを自動起動し、`MikiKumagai` の全公開リポジトリを取得します。Gemini API キーは不要ですが、GitHub API へのネットワーク接続が必要です。API の制限などで途中の取得に失敗した場合は、部分的な一覧を全件として返さず、エラーになります。
-
 ## スキル・学習目標の設定
 
 `data/profile.json` を編集して、自分の経験や目標を設定します。技術評価エージェントが `get_skill_profile` ツールを通じて、このファイルを読み込みます。
@@ -112,8 +104,7 @@ tech-learning-agent/
 ├── data/
 │   └── profile.json          # スキル・経験・学習目標
 ├── mcp_server/
-│   ├── server.py             # GitHub リポジトリ情報を返す MCP サーバー
-│   └── client.py             # MCP ツールの呼び出し確認
+│   └── server.py             # GitHub リポジトリ情報を返す MCP サーバー
 └── tech_learning_agent/
     ├── __init__.py
     ├── agent.py              # ADK が読み込むメインエージェント
